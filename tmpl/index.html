@@ -1,0 +1,11 @@
+<script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+<script src="static/app.js"></script>
+
+<h2>Items</h2>
+{{if eq (len .) 0}}
+No Items added
+{{end}}
+{{range .}}
+  Item {{.}}
+{{end}}
+<button id="start">Add Instituion</button>
