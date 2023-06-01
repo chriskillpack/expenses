@@ -1,8 +1,8 @@
 # Server TLS certs
 certs/
 
-# Plaid client SDK secrets
-set_env.sh
+# Secrets in environment variables
+.env
 
 # Databases
 expenses_sandbox.db

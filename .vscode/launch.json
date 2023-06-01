@@ -10,6 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "cwd": "${fileWorkspaceFolder}",
+            "envFile": "${fileWorkspaceFolder}/.env",
             "program": "${workspaceFolder}/cmd/expenses",
         }
     ]

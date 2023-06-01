@@ -6,7 +6,10 @@ require github.com/mattn/go-sqlite3 v1.14.16
 
 require github.com/BurntSushi/toml v1.2.1
 
-require github.com/plaid/plaid-go/v12 v12.0.0
+require (
+	github.com/joho/godotenv v1.5.1
+	github.com/plaid/plaid-go/v12 v12.0.0
+)
 
 require (
 	github.com/golang/protobuf v1.5.3 // indirect

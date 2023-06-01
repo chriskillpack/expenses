@@ -6,6 +6,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	expenses "github.com/chriskillpack/expense-tracker"
+	"github.com/joho/godotenv"
 	"github.com/plaid/plaid-go/v12/plaid"
 )
 
@@ -13,6 +14,7 @@ var configFile = flag.String("config", "config.toml", "Path to configuration fil
 
 func main() {
 	flag.Parse()
+	godotenv.Load()
 
 	appConfig := expenses.AppConfig{}
 	_, err := toml.DecodeFile(*configFile, &appConfig)
