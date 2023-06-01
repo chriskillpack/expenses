@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"text/template"
 
-	plaid "github.com/plaid/plaid-go/v12/plaid"
+	"github.com/plaid/plaid-go/v12/plaid"
 )
 
 type Server struct {
