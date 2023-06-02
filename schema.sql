@@ -24,5 +24,5 @@ CREATE TABLE IF NOT EXISTS plaid_transactions (
     id INTEGER PRIMARY KEY,
     plaid_transaction TEXT NOT NULL,
     plaid_transaction_id TEXT UNIQUE NOT NULL,
-    deleted INTEGER  -- 0 means transaction valid, 1 means deleted
+    deleted_at TIMESTAMPTZ DEFAULT NULL
 )

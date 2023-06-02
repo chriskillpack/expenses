@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"sync"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/plaid/plaid-go/v12/plaid"
@@ -201,10 +202,10 @@ func (db *DB) UpdatePlaidTransactions(ctx context.Context, added []plaid.Transac
 			end = len(added)
 		}
 
-		queryString := "INSERT INTO plaid_transactions (plaid_transaction, plaid_transaction_id, deleted) VALUES"
+		queryString := "INSERT INTO plaid_transactions (plaid_transaction, plaid_transaction_id) VALUES"
 		params := make([]any, batchSize*2)
 		for idx, item := range added[start:end] {
-			queryString = queryString + " ($" + strconv.Itoa(idx*2+1) + ",$" + strconv.Itoa(idx*2+2) + ",0),"
+			queryString = queryString + " ($" + strconv.Itoa(idx*2+1) + ",$" + strconv.Itoa(idx*2+2) + "),"
 
 			jsontxn, err := json.Marshal(item)
 			if err != nil {
@@ -232,10 +233,11 @@ func (db *DB) UpdatePlaidTransactions(ctx context.Context, added []plaid.Transac
 	}
 
 	// Go through and mark any removed transactions
+	deleted_at := time.Now().UTC()
 	for _, rem := range removed {
 		txnid := rem.GetTransactionId()
 
-		_, err := txn.Exec("UPDATE plaid_transactions SET deleted=1 WHERE plaid_transaction_id=$1", txnid)
+		_, err := txn.Exec("UPDATE plaid_transactions SET deleted_at=$1 WHERE plaid_transaction_id=$2", deleted_at, txnid)
 		if err != nil {
 			return 0, err
 		}
