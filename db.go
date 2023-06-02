@@ -183,7 +183,7 @@ func (db *DB) GetItemCursorOrNil(ctx context.Context, item_id string) (string, e
 	return cursor, nil
 }
 
-func (db *DB) UpdatePlaidTransactions(ctx context.Context, added []plaid.Transaction, plaid_item_id, cursor string) (int64, error) {
+func (db *DB) UpdatePlaidTransactions(ctx context.Context, added []plaid.Transaction, removed []plaid.RemovedTransaction, plaid_item_id, cursor string) (int64, error) {
 	// Insert into the DB in batches of 5
 	const batchSize = 5
 
@@ -201,10 +201,10 @@ func (db *DB) UpdatePlaidTransactions(ctx context.Context, added []plaid.Transac
 			end = len(added)
 		}
 
-		queryString := "INSERT INTO plaid_transactions (plaid_transaction, plaid_transaction_id) VALUES"
+		queryString := "INSERT INTO plaid_transactions (plaid_transaction, plaid_transaction_id, deleted) VALUES"
 		params := make([]any, batchSize*2)
 		for idx, item := range added[start:end] {
-			queryString = queryString + " ($" + strconv.Itoa(idx*2+1) + ",$" + strconv.Itoa(idx*2+2) + "),"
+			queryString = queryString + " ($" + strconv.Itoa(idx*2+1) + ",$" + strconv.Itoa(idx*2+2) + ",0),"
 
 			jsontxn, err := json.Marshal(item)
 			if err != nil {
@@ -229,6 +229,16 @@ func (db *DB) UpdatePlaidTransactions(ctx context.Context, added []plaid.Transac
 		affected += ra
 
 		start = end
+	}
+
+	// Go through and mark any removed transactions
+	for _, rem := range removed {
+		txnid := rem.GetTransactionId()
+
+		_, err := txn.Exec("UPDATE plaid_transactions SET deleted=1 WHERE plaid_transaction_id=$1", txnid)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	// Finally update the cursor

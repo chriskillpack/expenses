@@ -173,8 +173,9 @@ func (srv *Server) getAccessToken() http.HandlerFunc {
 
 func (srv *Server) syncTransactions() http.HandlerFunc {
 	type response struct {
-		ErrorMsg          string `json:",omitempty"`
-		TransactionsAdded int    `json:"transactions_added"`
+		ErrorMsg            string `json:",omitempty"`
+		TransactionsAdded   int    `json:"transactions_added"`
+		TransactionsRemoved int    `json:"transactions_removed"`
 	}
 
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -197,6 +198,7 @@ func (srv *Server) syncTransactions() http.HandlerFunc {
 
 			hasMore := true
 			var added []plaid.Transaction
+			var removed []plaid.RemovedTransaction
 
 			for hasMore {
 				tsr := plaid.NewTransactionsSyncRequest(item.AccessToken)
@@ -213,18 +215,20 @@ func (srv *Server) syncTransactions() http.HandlerFunc {
 				hasMore = tsresp.GetHasMore()
 
 				added = append(added, tsresp.GetAdded()...)
+				removed = append(removed, tsresp.GetRemoved()...)
 
 				cursor = tsresp.GetNextCursor()
 			}
 
 			// Update the cursor
-			n, err := srv.db.UpdatePlaidTransactions(req.Context(), added, item.PlaidItemId, cursor)
+			n, err := srv.db.UpdatePlaidTransactions(req.Context(), added, removed, item.PlaidItemId, cursor)
 			if err != nil {
 				resp.ErrorMsg = err.Error()
 				returnJSON(w, http.StatusInternalServerError, resp)
 				return
 			}
 			resp.TransactionsAdded = int(n)
+			resp.TransactionsRemoved = len(removed)
 			returnJSON(w, http.StatusOK, resp)
 		}
 	}
