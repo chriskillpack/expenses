@@ -42,7 +42,7 @@ func NewServer(client *plaid.APIClient, db *DB, port int, certFile, keyFile stri
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/get_access_token", srv.getAccessToken())
-	mux.Handle("/link/token/create", srv.createLinkToken())
+	mux.Handle("/create_link_token", srv.createLinkToken())
 	mux.Handle("/admin/institutions/refresh", srv.refreshInstitutions())
 	mux.Handle("/admin/transactions/sync", srv.syncTransactions())
 	mux.Handle("/static/", http.FileServer(http.Dir("")))
@@ -70,16 +70,18 @@ func (srv *Server) serveRoot() http.HandlerFunc {
 }
 
 func (srv *Server) createLinkToken() http.HandlerFunc {
+	type response struct {
+		ErrorMsg  string `json:",omitempty"`
+		LinkToken string `json:",omitempty"`
+	}
+
 	return func(w http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodPost {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		p := &struct {
-			ErrorMsg  string `json:",omitempty"`
-			LinkToken string `json:",omitempty"`
-		}{}
+		var resp response
 
 		user := plaid.LinkTokenCreateRequestUser{ClientUserId: "1"}
 		ltcreq := plaid.NewLinkTokenCreateRequest(
@@ -90,15 +92,13 @@ func (srv *Server) createLinkToken() http.HandlerFunc {
 		ltcreq.SetProducts([]plaid.Products{plaid.PRODUCTS_TRANSACTIONS})
 		ltcres, _, err := srv.client.PlaidApi.LinkTokenCreate(req.Context()).LinkTokenCreateRequest(*ltcreq).Execute()
 		if err != nil {
-			p.ErrorMsg = err.Error()
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(p)
+			resp.ErrorMsg = err.Error()
+			returnJSON(w, http.StatusBadRequest, resp)
 			return
 		}
 
-		p.LinkToken = ltcres.LinkToken
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(p)
+		resp.LinkToken = ltcres.LinkToken
+		returnJSON(w, http.StatusCreated, resp)
 	}
 }
 

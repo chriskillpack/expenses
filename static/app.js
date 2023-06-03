@@ -17,7 +17,7 @@ function linkSuccess(public_token, metadata) {
 window.addEventListener("load", (event) => {
     const el = document.querySelector("#start");
     el.addEventListener("click", (event) => {
-        fetch("/link/token/create", {method: 'POST'})
+        fetch("/create_link_token", {method: 'POST'})
             .then((response) => response.json())
             .then((res) => {
                 Plaid.create({
