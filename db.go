@@ -21,6 +21,14 @@ type DB struct {
 	db *sql.DB
 }
 
+type Account struct {
+	Id             int
+	PlaidAccountId string
+	AccountMask    string
+	Type           string
+	Subtype        string
+}
+
 type Item struct {
 	Id                 int
 	AccessToken        string
@@ -82,6 +90,30 @@ func (db *DB) RetrieveItems(ctx context.Context) ([]*Item, error) {
 	defer rows.Close()
 
 	return scanItems(rows)
+}
+
+func (db *DB) CreateAccounts(ctx context.Context, accounts []Account, institutionId string) error {
+	txn, err := db.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil
+	}
+	defer txn.Rollback()
+
+	for _, acct := range accounts {
+		_, err := txn.ExecContext(ctx, `
+			REPLACE INTO accounts
+				(plaid_account_id, plaid_institution_id, account_mask, type, subtype)
+			VALUES ($1, $2, $3, $4, $5)`, acct.PlaidAccountId, institutionId, acct.AccountMask, acct.Type, acct.Subtype)
+		if err != nil {
+			return err
+		}
+	}
+
+	if err = txn.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (db *DB) RetrieveItemsByPlaidInstitutionId(ctx context.Context, institutionId string) ([]*Item, error) {

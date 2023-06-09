@@ -137,16 +137,33 @@ func (srv *Server) getAccessToken() http.HandlerFunc {
 			return
 		}
 
+		// TODO - Decide if we still need this logic - what happens if they add another account
+		// from the same institute?
 		// Look up to see if we already have an existing item for this institution
-		items, err := srv.db.RetrieveItemsByPlaidInstitutionId(req.Context(), pay.Institution.Id)
+		// items, err := srv.db.RetrieveItemsByPlaidInstitutionId(req.Context(), pay.Institution.Id)
+		// if err != nil {
+		// 	resp.ErrorMsg = err.Error()
+		// 	returnJSON(w, http.StatusInternalServerError, resp)
+		// 	return
+		// }
+		// if len(items) > 0 {
+		// 	resp.ErrorMsg = "Institution already linked"
+		// 	returnJSON(w, http.StatusBadRequest, resp)
+		// 	return
+		// }
+
+		// Insert all the returned accounts
+		dba := make([]Account, len(pay.Accounts))
+		for i, acct := range pay.Accounts {
+			dba[i].PlaidAccountId = acct.Id
+			dba[i].AccountMask = acct.Mask
+			dba[i].Type = acct.Type
+			dba[i].Subtype = acct.Subtype
+		}
+		err = srv.db.CreateAccounts(req.Context(), dba, pay.Institution.Id)
 		if err != nil {
 			resp.ErrorMsg = err.Error()
 			returnJSON(w, http.StatusInternalServerError, resp)
-			return
-		}
-		if len(items) > 0 {
-			resp.ErrorMsg = "Institution already linked"
-			returnJSON(w, http.StatusBadRequest, resp)
 			return
 		}
 

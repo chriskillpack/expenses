@@ -1,3 +1,12 @@
+CREATE TABLE IF NOT EXISTS accounts (
+    id INTEGER NOT NULL PRIMARY KEY,
+    plaid_account_id TEXT UNIQUE NOT NULL,
+    plaid_institution_id TEXT NOT NULL,
+    account_mask TEXT,
+    type TEXT,
+    subtype TEXT
+);
+
 CREATE TABLE IF NOT EXISTS cursors (
 	id INTEGER NOT NULL PRIMARY KEY,
 	plaid_item_id TEXT UNIQUE NOT NULL,
