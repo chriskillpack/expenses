@@ -292,26 +292,25 @@ func (srv *Server) refreshInstitutions() http.HandlerFunc {
 			return
 		}
 
-		// Start the worker
-		ch := make(chan string, 5)
-		go func(done <-chan struct{}) {
-			for id := range ch {
-				select {
-				case <-done:
-					return
-				default:
-					updateFn(id)
-				}
+		// Update each institution
+		for _, iid := range iids {
+			select {
+			case <-req.Context().Done():
+				err = req.Context().Err()
+			default:
+				err = updateFn(iid)
 			}
-		}(req.Context().Done())
 
-		go func() {
-			// Enqueue the jobs
-			for _, iids := range iids {
-				ch <- iids
+			if err != nil {
+				break
 			}
-			close(ch)
-		}()
+		}
+
+		if err != nil {
+			resp.ErrorMsg = err.Error()
+			returnJSON(w, http.StatusInternalServerError, resp)
+			return
+		}
 
 		returnJSON(w, http.StatusOK, resp)
 	}
