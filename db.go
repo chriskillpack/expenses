@@ -100,8 +100,9 @@ func (db *DB) CreateAccounts(ctx context.Context, accounts []Account, institutio
 	defer txn.Rollback()
 
 	for _, acct := range accounts {
-		_, err := txn.ExecContext(ctx, `
-			REPLACE INTO accounts
+		_, err := txn.ExecContext(
+			ctx,
+			`REPLACE INTO accounts
 				(plaid_account_id, plaid_institution_id, account_mask, type, subtype)
 			VALUES ($1, $2, $3, $4, $5)`, acct.PlaidAccountId, institutionId, acct.AccountMask, acct.Type, acct.Subtype)
 		if err != nil {
@@ -250,7 +251,7 @@ func (db *DB) UpdatePlaidTransactions(ctx context.Context, added []plaid.Transac
 		// Remove the trailing colon
 		queryString = queryString[0 : len(queryString)-1]
 
-		res, err := txn.Exec(queryString, params...)
+		res, err := txn.ExecContext(ctx, queryString, params...)
 		if err != nil {
 			return 0, err
 		}
@@ -269,15 +270,20 @@ func (db *DB) UpdatePlaidTransactions(ctx context.Context, added []plaid.Transac
 	for _, rem := range removed {
 		txnid := rem.GetTransactionId()
 
-		_, err := txn.Exec("UPDATE plaid_transactions SET deleted_at=$1 WHERE plaid_transaction_id=$2", deleted_at, txnid)
+		_, err := txn.ExecContext(ctx,
+			`UPDATE plaid_transactions
+			 SET deleted_at=$1
+			 WHERE plaid_transaction_id=$2`, deleted_at, txnid)
 		if err != nil {
 			return 0, err
 		}
 	}
 
 	// Finally update the cursor
-	_, err = txn.Exec(`
-		REPLACE INTO cursors (plaid_item_id, cursor)
+	_, err = txn.ExecContext(
+		ctx,
+		`REPLACE INTO cursors
+			(plaid_item_id, cursor)
 		VALUES ($1, $2)`, plaid_item_id, cursor)
 	if err != nil {
 		return 0, err
