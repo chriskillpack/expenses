@@ -29,6 +29,35 @@ var (
 	indexTmpl *template.Template
 )
 
+type LoggingMux struct {
+	handler http.Handler
+	logger  *log.Logger
+}
+
+func (l *LoggingMux) ServeHTTP(_w http.ResponseWriter, req *http.Request) {
+	w := NewLoggingResponseWriter(_w)
+
+	l.handler.ServeHTTP(w, req)
+	l.logger.Printf("%d %s %s", w.code, req.Method, req.URL.Path)
+}
+
+type LoggingResponseWriter struct {
+	w    http.ResponseWriter
+	code int
+}
+
+func (lw *LoggingResponseWriter) WriteHeader(statusCode int) {
+	lw.code = statusCode
+	lw.w.WriteHeader(statusCode)
+}
+
+func (lw LoggingResponseWriter) Header() http.Header         { return lw.w.Header() }
+func (lw LoggingResponseWriter) Write(b []byte) (int, error) { return lw.w.Write(b) }
+
+func NewLoggingResponseWriter(w http.ResponseWriter) *LoggingResponseWriter {
+	return &LoggingResponseWriter{w, http.StatusOK}
+}
+
 func init() {
 	indexTmpl = template.Must(template.ParseFS(embeddedFS, "tmpl/index.html"))
 }
@@ -51,7 +80,7 @@ func NewServer(client *plaid.APIClient, db *DB, port int, certFile, keyFile stri
 	srv.mux = mux
 	srv.s = &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: srv.mux,
+		Handler: &LoggingMux{srv.mux, log.Default()},
 	}
 
 	return srv
