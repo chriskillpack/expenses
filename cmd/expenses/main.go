@@ -27,11 +27,22 @@ func envToPlaidEnv(env string) plaid.Environment {
 
 func main() {
 	flag.Parse()
-	godotenv.Load()
 
 	appConfig := expenses.AppConfig{}
 	_, err := toml.DecodeFile(*configFile, &appConfig)
 	if err != nil {
+		log.Fatal(err)
+	}
+
+	envFile := appConfig.EnvFile
+	if envFile == "" {
+		envFile = ".env"
+	}
+	if err = godotenv.Load(envFile); err != nil {
+		log.Fatal(err)
+	}
+
+	if err = appConfig.ResolveEnvVars(); err != nil {
 		log.Fatal(err)
 	}
 

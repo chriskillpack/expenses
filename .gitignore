@@ -2,8 +2,7 @@
 certs/
 
 # Secrets in environment variables
-.env
+*.env
 
 # Databases
-expenses_sandbox.db
-expenses_development.db
+expenses_*.db
