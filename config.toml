@@ -1,5 +1,5 @@
 db_file = "./expenses_sandbox.db"
-plaid_environment = "sandbox"
+environment = "sandbox"
 plaid_client_id = "!PLAID_CLIENT_ID"
 plaid_client_secret = "!PLAID_CLIENT_SECRET"
 https_cert_file = "certs/localhost+2.pem"

@@ -3,27 +3,7 @@ package expenses
 import (
 	"fmt"
 	"os"
-
-	"github.com/plaid/plaid-go/v12/plaid"
 )
-
-// Environment is a string representation of a Plaid environment
-type Environment string
-
-func (e *Environment) UnmarshalText(text []byte) error {
-	switch string(text) {
-	case "development":
-		*e = Environment(plaid.Development)
-	case "sandbox":
-		*e = Environment(plaid.Sandbox)
-	case "production":
-		*e = Environment(plaid.Production)
-	default:
-		return fmt.Errorf("unrecognized environment %q", string(text))
-	}
-
-	return nil
-}
 
 // EnvVar takes the value of an environment variable if its config value is
 // !CONFIG_VAR_TO_LOOKUP
@@ -50,11 +30,11 @@ func (e *EnvVar) UnmarshalText(text []byte) error {
 
 // AppConfig holds application config parsed from TOML config file
 type AppConfig struct {
-	DbFile            string      `toml:"db_file"`
-	PlaidEnvironment  Environment `toml:"plaid_environment"`
-	PlaidClientId     EnvVar      `toml:"plaid_client_id"`
-	PlaidClientSecret EnvVar      `toml:"plaid_client_secret"`
-	ServerPort        int         `toml:"server_port"`
-	TLSCertFile       string      `toml:"https_cert_file"`
-	TLSKeyFile        string      `toml:"https_key_file"`
+	DbFile            string `toml:"db_file"`
+	Environment       string `toml:"environment"`
+	PlaidClientId     EnvVar `toml:"plaid_client_id"`
+	PlaidClientSecret EnvVar `toml:"plaid_client_secret"`
+	ServerPort        int    `toml:"server_port"`
+	TLSCertFile       string `toml:"https_cert_file"`
+	TLSKeyFile        string `toml:"https_key_file"`
 }

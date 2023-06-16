@@ -12,6 +12,19 @@ import (
 
 var configFile = flag.String("config", "config.toml", "Path to configuration file")
 
+func envToPlaidEnv(env string) plaid.Environment {
+	switch env {
+	case "development":
+		return plaid.Development
+	case "sandbox":
+		return plaid.Sandbox
+	case "production":
+		return plaid.Production
+	}
+
+	return ""
+}
+
 func main() {
 	flag.Parse()
 	godotenv.Load()
@@ -22,8 +35,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	log.Printf("Environment %s\n", appConfig.Environment)
+	penv := envToPlaidEnv(appConfig.Environment)
+	if penv == "" {
+		log.Fatalf("Unrecognized environment %q\n", penv)
+	}
+
 	config := plaid.NewConfiguration()
-	config.UseEnvironment(plaid.Environment(appConfig.PlaidEnvironment))
+	config.UseEnvironment(penv)
 	config.AddDefaultHeader("PLAID-CLIENT-ID", string(appConfig.PlaidClientId))
 	config.AddDefaultHeader("PLAID-SECRET", string(appConfig.PlaidClientSecret))
 
